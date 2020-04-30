@@ -31,7 +31,11 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: "12.x"
-
+      
+      - name: Read package.json
+        uses: tyankatsu0105/read-package-version-actions@v1
+        id: package-version
+      
       - name: Install dependencies
         run: npm ci
 
@@ -45,25 +49,17 @@ jobs:
         working-directory: ${{ env.msbuildtarget }}
         run: msbuild /restore /t:rebuild
 
-      - name: Read package.json
-        uses: tyankatsu0105/read-package-version-actions@v1
-        id: package-version
-
-      - name: Solution File Names with version
-        id: env-file-paths
-        run: set unmanagedsolutionfullpath=${{ env.solutionpath }}${{ env.solutionname }}.zip & set unmanagedsolutionname=${{ env.solutionname }}_${{ steps.package-version.outputs.version }}_unmanaged.zip & set managedsolutionfullpath=${{ env.solutionpath }}${{ env.solutionname }}_managed.zip & set managedsolutionname=${{ env.solutionname }}_${{ steps.package-version.outputs.version }}_managed.zip
-
-      - name: Managed Solution Artifact ${{ env.managedsolutionname }}
+      - name: Managed Solution Artifact ${{ ${{ env.solutionname }}_${{ steps.package-version.outputs.version }}_managed.zip }}
         uses: actions/upload-artifact@v2
         with:
           name: ${{ steps.file-paths.outputs.managedsolutionname }}
-          path: ${{ env.managedsolutionfullpath }}
+          path: ${{ ${{ env.solutionpath }}${{ env.solutionname }}_managed.zip }}
 
-      - name: Unmanaged Solution Artifact ${{ env.unmanagedsolutionname }}
+      - name: Unmanaged Solution Artifact ${{ ${{ env.solutionname }}_${{ steps.package-version.outputs.version }}_unmanaged.zip }}
         uses: actions/upload-artifact@v2
         with:
-          name: ${{ env.unmanagedsolutionname }}
-          path: ${{ env.unmanagedsolutionfullpath }}
+          name: ${{ ${{ env.solutionname }}_${{ steps.package-version.outputs.version }}_unmanaged.zip }}
+          path: ${{ ${{ env.solutionpath }}${{ env.solutionname }}.zip }}
 
       - name: Create Release ${{ env.solutionname }}_v${{ steps.package-version.outputs.version }}
         id: create_release
@@ -77,7 +73,7 @@ jobs:
           draft: false
           prerelease: false
 
-      - name: Upload Release Asset ${{ env.managedsolutionname }} (Managed)
+      - name: Upload Release Asset ${{ ${{ env.solutionname }}_${{ steps.package-version.outputs.version }}_managed.zip }} (Managed)
         id: release-managed-solution
         uses: actions/upload-release-asset@v1
         if: steps.create_release.conclusion == 'success'
@@ -85,11 +81,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ env.managedsolutionfullpath }}
-          asset_name: ${{ env.managedsolutionname }}
+          asset_path: ${{ ${{ env.solutionpath }}${{ env.solutionname }}_managed.zip }}
+          asset_name: ${{ ${{ env.solutionname }}_${{ steps.package-version.outputs.version }}_managed.zip }}
           asset_content_type: application/zip
 
-      - name: Upload Release Asset ${{ env.unmanagedsolutionname }} (Unmanaged)
+      - name: Upload Release Asset ${{ ${{ env.solutionname }}_${{ steps.package-version.outputs.version }}_unmanaged.zip }} (Unmanaged)
         id: release-unmanaged-solution
         uses: actions/upload-release-asset@v1
         if: steps.create_release.conclusion == 'success'
@@ -97,6 +93,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ env.unmanagedsolutionfullpath }}
-          asset_name: ${{ env.unmanagedsolutionname }}
+          asset_path: ${{ ${{ env.solutionpath }}${{ env.solutionname }}.zip }}
+          asset_name: ${{ ${{ env.solutionname }}_${{ steps.package-version.outputs.version }}_unmanaged.zip }}
           asset_content_type: application/zip
