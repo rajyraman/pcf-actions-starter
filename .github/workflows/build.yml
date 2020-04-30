@@ -1,0 +1,111 @@
+name: build
+
+on:
+  push:
+    branches: [master]
+    tags:
+      - "v*" # Push events to matching v*, i.e. v1.0, v20.15.10
+  pull_request:
+    branches: [master]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    strategy:
+      matrix:
+        node-version: [12.x]
+    env:
+      solutionname: HelloPCF
+      msbuildtarget: Solution/HelloPCF
+      solutionpath: Solution/HelloPCF/bin/Debug/
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Use Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: "12.x"
+
+      - name: Get npm cache directory
+        id: npm-cache
+        run: |
+          echo "::set-output name=dir::$(npm config get cache)"
+
+      - name: Cache Node.js modules
+        uses: actions/cache@v1
+        with:
+          path: ${{ steps.npm-cache.outputs.dir }}
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install dependencies
+        run: npm ci
+
+      - run: npm run build --if-present
+      - run: npm test
+
+      - name: setup-msbuild
+        uses: microsoft/setup-msbuild@v1
+
+      - name: MSBuild
+        working-directory: ${{ env.msbuildtarget }}
+        run: msbuild /restore /t:rebuild
+
+      - name: Read package.json
+        uses: tyankatsu0105/read-package-version-actions@v1
+        id: package-version
+
+      - name: Managed Solution Artifact ${{ steps.package-version.outputs.version }}_managed.zip
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ env.solutionname }}_${{ steps.package-version.outputs.version }}_managed.zip
+          path: ${{ env.solutionpath }}${{ env.solutionname }}_managed.zip
+
+      - name: Unmanaged Solution Artifact ${{ steps.package-version.outputs.version }}_unmanaged.zip
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ env.solutionname }}_${{ steps.package-version.outputs.version }}_unmanaged.zip
+          path: ${{ env.solutionpath }}${{ env.solutionname }}.zip
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        if: contains(github.ref, 'refs/tags/v')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: ${{ env.solutionname }}_v${{ steps.package-version.outputs.version }}
+          draft: false
+          prerelease: false
+
+      - name: Upload Release Asset (Managed)
+        id: release-managed-solution
+        uses: actions/upload-release-asset@v1
+        if: steps.create_release.conclusion == 'success'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ env.solutionpath }}${{ env.solutionname }}.zip
+          asset_name: ${{ env.solutionname }}_v${{ steps.package-version.outputs.version }}_managed.zip
+          asset_content_type: application/zip
+
+      - name: Upload Release Asset (Unmanaged)
+        id: release-unmanaged-solution
+        uses: actions/upload-release-asset@v1
+        if: steps.create_release.conclusion == 'success'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ env.solutionpath }}${{ env.solutionname }}.zip
+          asset_name: ${{ env.solutionname }}_v${{ steps.package-version.outputs.version }}_unmanaged.zip
+          asset_content_type: application/zip
