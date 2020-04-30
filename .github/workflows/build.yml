@@ -50,6 +50,7 @@ jobs:
         id: package-version
 
       - name: Solution File Names with version
+        run: echo env variables
         env:
           managedsolutionname: ${{ env.solutionname }}_${{ steps.package-version.outputs.version }}_managed.zip
           unmanagedsolutionname: ${{ env.solutionname }}_${{ steps.package-version.outputs.version }}_unmanaged.zip
