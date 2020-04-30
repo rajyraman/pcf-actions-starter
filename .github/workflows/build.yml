@@ -49,17 +49,17 @@ jobs:
         working-directory: ${{ env.msbuildtarget }}
         run: msbuild /restore /t:rebuild
 
-      - name: Managed Solution Artifact ${{ ${{ env.solutionname }}_${{ steps.package-version.outputs.version }}_managed.zip }}
+      - name: Managed Solution Artifact ${{ env.solutionname }}_${{ steps.package-version.outputs.version }}_managed.zip
         uses: actions/upload-artifact@v2
         with:
           name: ${{ steps.file-paths.outputs.managedsolutionname }}
-          path: ${{ ${{ env.solutionpath }}${{ env.solutionname }}_managed.zip }}
+          path: ${{ env.solutionpath }}${{ env.solutionname }}_managed.zip
 
-      - name: Unmanaged Solution Artifact ${{ ${{ env.solutionname }}_${{ steps.package-version.outputs.version }}_unmanaged.zip }}
+      - name: Unmanaged Solution Artifact ${{ env.solutionname }}_${{ steps.package-version.outputs.version }}_unmanaged.zip
         uses: actions/upload-artifact@v2
         with:
-          name: ${{ ${{ env.solutionname }}_${{ steps.package-version.outputs.version }}_unmanaged.zip }}
-          path: ${{ ${{ env.solutionpath }}${{ env.solutionname }}.zip }}
+          name: ${{ env.solutionname }}_${{ steps.package-version.outputs.version }}_unmanaged.zip
+          path: ${{ env.solutionpath }}${{ env.solutionname }}.zip
 
       - name: Create Release ${{ env.solutionname }}_v${{ steps.package-version.outputs.version }}
         id: create_release
@@ -73,7 +73,7 @@ jobs:
           draft: false
           prerelease: false
 
-      - name: Upload Release Asset ${{ ${{ env.solutionname }}_${{ steps.package-version.outputs.version }}_managed.zip }} (Managed)
+      - name: Upload Release Asset ${{ env.solutionname }}_${{ steps.package-version.outputs.version }}_managed.zip (Managed)
         id: release-managed-solution
         uses: actions/upload-release-asset@v1
         if: steps.create_release.conclusion == 'success'
@@ -81,11 +81,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ ${{ env.solutionpath }}${{ env.solutionname }}_managed.zip }}
-          asset_name: ${{ ${{ env.solutionname }}_${{ steps.package-version.outputs.version }}_managed.zip }}
+          asset_path: ${{ env.solutionpath }}${{ env.solutionname }}_managed.zip
+          asset_name: ${{ env.solutionname }}_${{ steps.package-version.outputs.version }}_managed.zip
           asset_content_type: application/zip
 
-      - name: Upload Release Asset ${{ ${{ env.solutionname }}_${{ steps.package-version.outputs.version }}_unmanaged.zip }} (Unmanaged)
+      - name: Upload Release Asset ${{ env.solutionname }}_${{ steps.package-version.outputs.version }}_unmanaged.zip (Unmanaged)
         id: release-unmanaged-solution
         uses: actions/upload-release-asset@v1
         if: steps.create_release.conclusion == 'success'
@@ -93,6 +93,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ ${{ env.solutionpath }}${{ env.solutionname }}.zip }}
-          asset_name: ${{ ${{ env.solutionname }}_${{ steps.package-version.outputs.version }}_unmanaged.zip }}
+          asset_path: ${{ env.solutionpath }}${{ env.solutionname }}.zip
+          asset_name: ${{ env.solutionname }}_${{ steps.package-version.outputs.version }}_unmanaged.zip
           asset_content_type: application/zip
