@@ -48,17 +48,23 @@ jobs:
       - name: Read package.json
         uses: tyankatsu0105/read-package-version-actions@v1
         id: package-version
-
+      
+      - name: Managed Solution File Name with version
+        echo "::set-env managedsolutionname=action_state::${{ env.solutionname }}_${{ steps.package-version.outputs.version }}_managed.zip"
+      
+      - name: Unmanaged Solution File Name with version
+        echo "::set-env unmanagedsolutionname=action_state::${{ env.solutionname }}_${{ steps.package-version.outputs.version }}_unmanaged.zip"    
+      
       - name: Managed Solution Artifact ${{ steps.package-version.outputs.version }}_managed.zip
         uses: actions/upload-artifact@v2
         with:
-          name: ${{ env.solutionname }}_${{ steps.package-version.outputs.version }}_managed.zip
+          name: ${{ env.managedsolutionname }}
           path: ${{ env.solutionpath }}${{ env.solutionname }}_managed.zip
 
       - name: Unmanaged Solution Artifact ${{ steps.package-version.outputs.version }}_unmanaged.zip
         uses: actions/upload-artifact@v2
         with:
-          name: ${{ env.solutionname }}_${{ steps.package-version.outputs.version }}_unmanaged.zip
+          name:  ${{ env.unmanagedsolutionname }}
           path: ${{ env.solutionpath }}${{ env.solutionname }}.zip
 
       - name: Create Release
@@ -81,8 +87,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ env.solutionpath }}${{ env.solutionname }}.zip
-          asset_name: ${{ env.solutionname }}_v${{ steps.package-version.outputs.version }}_managed.zip
+          asset_path: ${{ env.solutionpath }}${{ env.solutionname }}_managed.zip
+          asset_name: ${{ env.managedsolutionname }}
           asset_content_type: application/zip
 
       - name: Upload Release Asset (Unmanaged)
@@ -94,5 +100,5 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ${{ env.solutionpath }}${{ env.solutionname }}.zip
-          asset_name: ${{ env.solutionname }}_v${{ steps.package-version.outputs.version }}_unmanaged.zip
+          asset_name: ${{ env.unmanagedsolutionname }}
           asset_content_type: application/zip
