@@ -52,10 +52,10 @@ jobs:
       - name: Solution File Names with version
         run: echo "Set additional env variables"
         env:
-          managedsolutionname: ${{ env.solutionname }}_${{ steps.package-version.outputs.version }}_managed.zip
-          unmanagedsolutionname: ${{ env.solutionname }}_${{ steps.package-version.outputs.version }}_unmanaged.zip
           unmanagedsolutionfullpath: ${{ env.solutionpath }}${{ env.solutionname }}.zip
+          unmanagedsolutionname: ${{ env.solutionname }}_${{ steps.package-version.outputs.version }}_unmanaged.zip          
           managedsolutionfullpath: ${{ env.solutionpath }}${{ env.solutionname }}_managed.zip
+          managedsolutionname: ${{ env.solutionname }}_${{ steps.package-version.outputs.version }}_managed.zip
 
       - name: Managed Solution Artifact ${{ env.managedsolutionname }}
         uses: actions/upload-artifact@v2
