@@ -50,17 +50,13 @@ jobs:
         id: package-version
 
       - name: Solution File Names with version
-        run: echo "Set additional env variables"
-        env:
-          unmanagedsolutionfullpath: ${{ env.solutionpath }}${{ env.solutionname }}.zip
-          unmanagedsolutionname: ${{ env.solutionname }}_${{ steps.package-version.outputs.version }}_unmanaged.zip          
-          managedsolutionfullpath: ${{ env.solutionpath }}${{ env.solutionname }}_managed.zip
-          managedsolutionname: ${{ env.solutionname }}_${{ steps.package-version.outputs.version }}_managed.zip
+        id: env-file-paths
+        run: set unmanagedsolutionfullpath=${{ env.solutionpath }}${{ env.solutionname }}.zip & set unmanagedsolutionname=${{ env.solutionname }}_${{ steps.package-version.outputs.version }}_unmanaged.zip & set managedsolutionfullpath=${{ env.solutionpath }}${{ env.solutionname }}_managed.zip & set managedsolutionname=${{ env.solutionname }}_${{ steps.package-version.outputs.version }}_managed.zip
 
       - name: Managed Solution Artifact ${{ env.managedsolutionname }}
         uses: actions/upload-artifact@v2
         with:
-          name: ${{ env.managedsolutionname }}
+          name: ${{ steps.file-paths.outputs.managedsolutionname }}
           path: ${{ env.managedsolutionfullpath }}
 
       - name: Unmanaged Solution Artifact ${{ env.unmanagedsolutionname }}
