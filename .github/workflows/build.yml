@@ -48,13 +48,12 @@ jobs:
       - name: Read package.json
         uses: tyankatsu0105/read-package-version-actions@v1
         id: package-version
-      
-      - name: Managed Solution File Name with version
-        echo "::set-env managedsolutionname=action_state::${{ env.solutionname }}_${{ steps.package-version.outputs.version }}_managed.zip"
-      
-      - name: Unmanaged Solution File Name with version
-        echo "::set-env unmanagedsolutionname=action_state::${{ env.solutionname }}_${{ steps.package-version.outputs.version }}_unmanaged.zip"    
-      
+
+      - name: Solution File Names with version
+        env:
+          managedsolutionname: ${{ env.solutionname }}_${{ steps.package-version.outputs.version }}_managed.zip
+          unmanagedsolutionname: ${{ env.solutionname }}_${{ steps.package-version.outputs.version }}_unmanaged.zip
+
       - name: Managed Solution Artifact ${{ steps.package-version.outputs.version }}_managed.zip
         uses: actions/upload-artifact@v2
         with:
@@ -64,7 +63,7 @@ jobs:
       - name: Unmanaged Solution Artifact ${{ steps.package-version.outputs.version }}_unmanaged.zip
         uses: actions/upload-artifact@v2
         with:
-          name:  ${{ env.unmanagedsolutionname }}
+          name: ${{ env.unmanagedsolutionname }}
           path: ${{ env.solutionpath }}${{ env.solutionname }}.zip
 
       - name: Create Release
