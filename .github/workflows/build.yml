@@ -16,9 +16,8 @@ jobs:
       matrix:
         node-version: [12.x]
     env:
-      solutionname: HelloPCF
       msbuildtarget: Solution/HelloPCF
-      solutionpath: Solution/HelloPCF/bin/Debug/
+
     steps:
       - uses: actions/checkout@v2
 
@@ -31,16 +30,26 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: "12.x"
-      
-      - name: Read package.json
-        uses: tyankatsu0105/read-package-version-actions@v1
-        id: package-version
-      
+
+      - name: Solution Unique name
+        id: solution-unique-name
+        uses: mavrosxristoforos/get-xml-info@1.0
+        with:
+          xml-file: ${{ env.msbuildtarget }}/Other/Solution.xml
+          xpath: "//ImportExportXml/SolutionManifest/UniqueName"
+
+      - name: Solution Version
+        id: solution-version
+        uses: mavrosxristoforos/get-xml-info@1.0
+        with:
+          xml-file: ${{ env.msbuildtarget }}/Other/Solution.xml
+          xpath: "//ImportExportXml/SolutionManifest/Version"
+
       - name: Install dependencies
         run: npm ci
 
       - run: npm run build --if-present
-      - run: npm test
+      - run: npm test --if-present
 
       - name: setup-msbuild
         uses: microsoft/setup-msbuild@v1
@@ -49,19 +58,19 @@ jobs:
         working-directory: ${{ env.msbuildtarget }}
         run: msbuild /restore /t:rebuild
 
-      - name: Managed Solution Artifact ${{ env.solutionname }}_${{ steps.package-version.outputs.version }}_managed.zip
+      - name: Managed Solution Artifact ${{ steps.solution-unique-name.outputs.info }}_${{ steps.solution-version.outputs.info }}_managed.zip
         uses: actions/upload-artifact@v2
         with:
           name: ${{ steps.file-paths.outputs.managedsolutionname }}
-          path: ${{ env.solutionpath }}${{ env.solutionname }}_managed.zip
+          path: ${{ env.msbuildtarget }}/bin/Debug/${{ steps.solution-unique-name.outputs.info }}_managed.zip
 
-      - name: Unmanaged Solution Artifact ${{ env.solutionname }}_${{ steps.package-version.outputs.version }}_unmanaged.zip
+      - name: Unmanaged Solution Artifact ${{ steps.solution-unique-name.outputs.info }}_${{ steps.solution-version.outputs.info }}_unmanaged.zip
         uses: actions/upload-artifact@v2
         with:
-          name: ${{ env.solutionname }}_${{ steps.package-version.outputs.version }}_unmanaged.zip
-          path: ${{ env.solutionpath }}${{ env.solutionname }}.zip
+          name: ${{ steps.solution-unique-name.outputs.info }}_${{ steps.solution-version.outputs.info }}_unmanaged.zip
+          path: ${{ env.msbuildtarget }}/bin/Debug/${{ steps.solution-unique-name.outputs.info }}.zip
 
-      - name: Create Release ${{ env.solutionname }}_v${{ steps.package-version.outputs.version }}
+      - name: Create Release ${{ steps.solution-unique-name.outputs.info }}_v${{ steps.solution-version.outputs.info }}
         id: create_release
         uses: actions/create-release@v1
         if: contains(github.ref, 'refs/tags/v')
@@ -69,11 +78,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ github.ref }}
-          release_name: ${{ env.solutionname }}_v${{ steps.package-version.outputs.version }}
+          release_name: ${{ steps.solution-unique-name.outputs.info }}_v${{ steps.solution-version.outputs.info }}
           draft: false
           prerelease: false
 
-      - name: Upload Release Asset ${{ env.solutionname }}_${{ steps.package-version.outputs.version }}_managed.zip (Managed)
+      - name: Upload Release Asset ${{ steps.solution-unique-name.outputs.info }}_${{ steps.solution-version.outputs.info }}_managed.zip (Managed)
         id: release-managed-solution
         uses: actions/upload-release-asset@v1
         if: steps.create_release.conclusion == 'success'
@@ -81,11 +90,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ env.solutionpath }}${{ env.solutionname }}_managed.zip
-          asset_name: ${{ env.solutionname }}_${{ steps.package-version.outputs.version }}_managed.zip
+          asset_path: ${{ env.msbuildtarget }}/bin/Debug/${{ steps.solution-unique-name.outputs.info }}_managed.zip
+          asset_name: ${{ steps.solution-unique-name.outputs.info }}_${{ steps.solution-version.outputs.info }}_managed.zip
           asset_content_type: application/zip
 
-      - name: Upload Release Asset ${{ env.solutionname }}_${{ steps.package-version.outputs.version }}_unmanaged.zip (Unmanaged)
+      - name: Upload Release Asset ${{ steps.solution-unique-name.outputs.info }}_${{ steps.solution-version.outputs.info }}_unmanaged.zip (Unmanaged)
         id: release-unmanaged-solution
         uses: actions/upload-release-asset@v1
         if: steps.create_release.conclusion == 'success'
@@ -93,6 +102,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ env.solutionpath }}${{ env.solutionname }}.zip
-          asset_name: ${{ env.solutionname }}_${{ steps.package-version.outputs.version }}_unmanaged.zip
+          asset_path: ${{ env.msbuildtarget }}/bin/Debug/${{ steps.solution-unique-name.outputs.info }}.zip
+          asset_name: ${{ steps.solution-unique-name.outputs.info }}_${{ steps.solution-version.outputs.info }}_unmanaged.zip
           asset_content_type: application/zip
