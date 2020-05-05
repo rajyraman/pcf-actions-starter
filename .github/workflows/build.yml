@@ -60,7 +60,7 @@ jobs:
       - name: Managed Solution Artifact ${{ steps.solution-unique-name.outputs.info }}_${{ steps.solution-version.outputs.info }}_managed.zip
         uses: actions/upload-artifact@v2
         with:
-          name: ${{ steps.file-paths.outputs.managedsolutionname }}
+          name: ${{ steps.solution-unique-name.outputs.info }}_${{ steps.solution-version.outputs.info }}_managed.zip
           path: ${{ env.msbuildtarget }}/bin/Debug/${{ steps.solution-unique-name.outputs.info }}_managed.zip
 
       - name: Unmanaged Solution Artifact ${{ steps.solution-unique-name.outputs.info }}_${{ steps.solution-version.outputs.info }}_unmanaged.zip
